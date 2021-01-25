@@ -15,7 +15,7 @@ spec:
       terminationGracePeriodSeconds: 0
       containers:
         - name: api
-          image: maqroll/vertx:0.1-SNAPSHOT
+          image: vertx:0.1-SNAPSHOT
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
