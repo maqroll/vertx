@@ -18,7 +18,8 @@ spec:
           image: registry.cloud.okteto.net/maqroll/vertx:0.1-SNAPSHOT
           imagePullPolicy: Always
           ports:
-            - containerPort: 8888
+            - containerPort: 8080
+            - containerPort: 3000
 
 ---
 
@@ -34,6 +35,8 @@ spec:
   type: ClusterIP
   ports:
     - name: hello-world
-      port: 8888
+      port: 8080
+    - name: echo
+      port: 3000
   selector:
     app: hello-world
