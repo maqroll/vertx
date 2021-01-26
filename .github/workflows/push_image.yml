@@ -1,0 +1,18 @@
+on: [workflow_dispatch]
+
+name: push image to okteto registry
+
+jobs:
+
+  devflow:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - uses: okteto/login@master
+      with:
+        token: ${{ secrets.OKTETO_TOKEN }}
+    
+    - name: "Build"
+      uses: okteto/build@master
+      with:
+        tag: registry.cloud.okteto.net/maqroll/vertx:0.1-SNAPSHOT
