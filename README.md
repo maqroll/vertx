@@ -4,4 +4,7 @@
 docker build -t registry.cloud.okteto.net/maqroll/vertx:0.1-SNAPSHOT .
 docker login registry.cloud.okteto.net
 docker push registry.cloud.okteto.net/maqroll/vertx:0.1-SNAPSHOT
+
+-- tunnel echo port
+kubectl port-forward service/hello-world 3000
 ```
