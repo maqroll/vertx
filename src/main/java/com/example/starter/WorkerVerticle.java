@@ -6,6 +6,8 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// Like event-loop verticles, worker verticles are single-threaded,
+// but unlike event-loop verticles, the thread may not always be the same.
 public class WorkerVerticle extends AbstractVerticle {
   private final Logger logger = LoggerFactory.getLogger(WorkerVerticle.class);
 
