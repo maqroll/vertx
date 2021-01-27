@@ -11,9 +11,10 @@ public class WorkerVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
-    vertx.setPeriodic(10_000, id -> {try {
+    vertx.setPeriodic(10_000, id -> {
+      try {
       logger.info("Zzz...");
-      Thread.sleep(8000);
+      Thread.sleep(15_000);
       logger.info("Up!");
     } catch (InterruptedException e) {
       logger.error("Woops", e);
