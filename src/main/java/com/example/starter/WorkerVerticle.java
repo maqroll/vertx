@@ -14,6 +14,7 @@ public class WorkerVerticle extends AbstractVerticle {
     vertx.setPeriodic(10_000, id -> {
       try {
       logger.info("Zzz...");
+      // If sleep time is bigger than period, get to sleep as soon at get awake
       Thread.sleep(15_000);
       logger.info("Up!");
     } catch (InterruptedException e) {
