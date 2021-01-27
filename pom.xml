@@ -23,8 +23,8 @@
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
     <main.verticle>com.example.starter.MixedThreading</main.verticle>
-    <launcher.class>io.vertx.core.Launcher</launcher.class>
-    <!--launcher.class>com.example.starter.ThreadsAndContext</launcher.class-->
+    <!--launcher.class>io.vertx.core.Launcher</launcher.class-->
+    <launcher.class>com.example.heat.Main</launcher.class>
   </properties>
 
   <dependencyManagement>

@@ -10,6 +10,6 @@ RUN mvn install
 
 FROM openjdk:8-jre-alpine
 WORKDIR /app
-EXPOSE 8888
+EXPOSE 8080
 COPY --from=0 /app/target/starter-1.0.0-SNAPSHOT-fat.jar /app
 CMD ["java", "-jar", "/app/starter-1.0.0-SNAPSHOT-fat.jar"]
