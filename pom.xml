@@ -24,7 +24,7 @@
 
     <main.verticle>com.example.starter.Deployer</main.verticle>
     <!--launcher.class>io.vertx.core.Launcher</launcher.class-->
-    <launcher.class>com.example.starter.WorkerVerticle</launcher.class>
+    <launcher.class>com.example.starter.Offload</launcher.class>
   </properties>
 
   <dependencyManagement>
