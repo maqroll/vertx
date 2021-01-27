@@ -21,7 +21,7 @@ public class SampleVerticle extends AbstractVerticle {
     for (int n = 0; n < 4; n++) {
       JsonObject conf = new JsonObject().put("n", n);
       DeploymentOptions opts = new DeploymentOptions().setConfig(conf).setInstances(n);
-      vertx.deployVerticle("chapter2.opts.SampleVerticle", opts);
+      vertx.deployVerticle("com.example.starter.SampleVerticle", opts);
     }
   }
 }
