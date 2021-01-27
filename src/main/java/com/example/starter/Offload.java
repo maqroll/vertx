@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 public class Offload extends AbstractVerticle {
   private final Logger logger = LoggerFactory.getLogger(Offload.class);
 
-  public void main(String[] args) {
+  public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     vertx.deployVerticle("com.example.starter.Offload");
   }
@@ -19,6 +19,8 @@ public class Offload extends AbstractVerticle {
   public void start() {
     vertx.setPeriodic(5000, id -> {
       logger.info("Tick");
+      // Add to the queue of processing in worker pool
+      // Queue for verticle??
       vertx.executeBlocking(this::blockingCode, this::resultHandler);
     });
   }
