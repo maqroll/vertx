@@ -8,6 +8,7 @@ import io.vertx.reactivex.core.RxHelper;
 
 import java.util.concurrent.TimeUnit;
 
+// AbstractVerticle in reactivex!!!
 public class RxHttpServer extends AbstractVerticle {
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
