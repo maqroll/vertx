@@ -8,6 +8,11 @@ import java.util.concurrent.TimeUnit;
 
 public class Intro {
 
+  // Observable<T>  A stream of events of type T. Does not support back-pressure.Timer events, observable source where we cannot apply back-pressure like GUI events
+  // Flowable<T>    A stream of events of type T where back-pressure can be applied.  Network data, filesystem inputs
+  // Single<T>      A source that emits exactly one event of type T. Fetching an entry from a data store by key
+  // Maybe<T>       A source that may emit one event of type T, or none. Fetching an entry from a data store by key, but the key may not exist
+  // Completable    A source that notifies of some action having completed, but no value is being given. Deleting files
   public static void main(String[] args) throws InterruptedException {
     Observable.just(1, 2, 3)
       .map(Object::toString)
