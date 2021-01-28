@@ -23,7 +23,7 @@
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
     <main.verticle>com.example.starter.MixedThreading</main.verticle>
-    <launcher.class>com.example.promises_and_futures.Intro</launcher.class>
+    <launcher.class>com.example.reactivex.Intro</launcher.class>
     <!--launcher.class>io.vertx.core.Launcher</launcher.class-->
   </properties>
 
@@ -43,6 +43,10 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java2</artifactId>
     </dependency>
 
     <dependency>
