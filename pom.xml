@@ -23,8 +23,8 @@
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
     <main.verticle>com.example.starter.MixedThreading</main.verticle>
+    <launcher.class>com.example.jukebox.Main</launcher.class>
     <!--launcher.class>io.vertx.core.Launcher</launcher.class-->
-    <launcher.class>com.example.heat.Main</launcher.class>
   </properties>
 
   <dependencyManagement>
@@ -113,7 +113,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>${exec-maven-plugin.version}</version>
         <configuration>
-          <mainClass>io.vertx.core.Launcher</mainClass>
+          <mainClass>${launcher.class}</mainClass>
           <arguments>
             <argument>run</argument>
             <argument>${main.verticle}</argument>
