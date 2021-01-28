@@ -17,9 +17,11 @@ public class RxHttpServer extends AbstractVerticle {
 
   @Override
   public Completable rxStart() {
+    // RxHelper.scheduler ensures that timer events get triggered from appropiate thread
+    // If you omit scheduler the subscription got executed on some RxComputationThreadPool
     Observable
       .interval(1, TimeUnit.SECONDS, RxHelper.scheduler(vertx))
-      .subscribe(n -> System.out.println("tick"));
+      .subscribe(n -> System.out.println("tick @" + Thread.currentThread().getName()));
 
     return vertx
       .createHttpServer()
