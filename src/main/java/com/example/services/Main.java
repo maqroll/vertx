@@ -8,7 +8,9 @@ public class Main {
     vertx.deployVerticle("com.example.services.DataVerticle")
       .compose(a -> {
         return vertx.deployVerticle("com.example.services.CallVerticle");
-      });
+      }).compose(a -> {
+        return vertx.deployVerticle("com.example.services.CallRxVerticle");
+    });
 
   }
 }

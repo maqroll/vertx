@@ -8,7 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
 @ProxyGen // Annotation used to generate an event-bus proxy
-//@VertxGen
+@VertxGen // Annotation to generate code for other programming models beyond callbacks
 // Vert.x does not rely on magic through bytecode engineering or reflection at runtime,
 // so service proxies and handlers need to be written and compiled.
 // Vert.x comes with code generators instead, so you will generate both the service proxies
