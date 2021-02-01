@@ -15,6 +15,8 @@ import static org.assertj.core.data.Percentage.withPercentage;
 class SensorDataServiceTest {
   private ExampleDataService dataService;
 
+  // The Vertx Extension class takes care of async operations by waiting for VertxTestContext to report either a success or a failure.
+  // To avoid having tests wait forever, there is a timeout (30 seconds by default)
   @BeforeEach
   void prepare(Vertx vertx, VertxTestContext ctx) {
     // deploy new DataVerticle()
