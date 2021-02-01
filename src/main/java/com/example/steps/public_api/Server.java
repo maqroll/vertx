@@ -2,6 +2,7 @@ package com.example.steps.public_api;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
@@ -15,16 +16,21 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate;
 import io.vertx.reactivex.ext.web.codec.BodyCodec;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
+// TODO: integration tests
+// what about unit testing!!!
 public class Server extends AbstractVerticle {
   private final Logger logger = LoggerFactory.getLogger(Server.class);
   // A WebClient instance is typically stored in a private field of a verticle class,
-  // as it can beused to perform multiple concurrent HTTP requests.
+  // as it can reused to perform multiple concurrent HTTP requests.
   WebClient webClient;
   JWTAuth jwtAuth;
 
@@ -48,6 +54,23 @@ public class Server extends AbstractVerticle {
       .addPubSecKey(new PubSecKeyOptions().setAlgorithm("RS256").setBuffer(privateKey)));
 
     JWTAuthHandler jwtHandler = JWTAuthHandler.create(jwtAuth);
+
+    Set<String> allowedHeaders = new HashSet<>();
+    allowedHeaders.add("x-requested-with");
+    allowedHeaders.add("Access-Control-Allow-Origin");
+    allowedHeaders.add("origin");
+    allowedHeaders.add("Content-Type");
+    allowedHeaders.add("accept");
+    allowedHeaders.add("Authorization");
+
+    Set<HttpMethod> allowedMethods = new HashSet<>();
+    allowedMethods.add(HttpMethod.GET);
+    allowedMethods.add(HttpMethod.POST);
+    allowedMethods.add(HttpMethod.OPTIONS);
+    allowedMethods.add(HttpMethod.PUT);
+
+    router.route()
+      .handler(CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
 
     BodyHandler bodyHandler = BodyHandler.create();
     router.post().handler(bodyHandler);

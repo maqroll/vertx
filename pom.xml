@@ -80,9 +80,25 @@
       <artifactId>vertx-rx-java2-gen</artifactId>
       <version>${vertx.version}</version>
     </dependency>
+
+    <!-- authorization using jwt -->
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-auth-jwt</artifactId>
+    </dependency>
+
+    <!-- ingestion -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-amqp-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-kafka-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-mail-client</artifactId>
     </dependency>
 
     <dependency>
