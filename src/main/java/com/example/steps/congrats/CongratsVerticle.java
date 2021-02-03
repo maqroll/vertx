@@ -1,4 +1,4 @@
-package com.example.steps.public_api;
+package com.example.steps.congrats;
 
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -44,6 +44,7 @@ public class CongratsVerticle extends AbstractVerticle {
 
   private Single<MailResult> sendmail(KafkaConsumerRecord<String, JsonObject> record) {
     logger.info("Send congrats to user on walking more than 10k steps on one day");
+    return Single.just(new MailResult()); // empty recipients
   }
 
   private Single<String> getEmail(String username) {

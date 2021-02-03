@@ -1,4 +1,4 @@
-package com.example.steps.public_api;
+package com.example.steps.ingestion;
 
 import io.reactivex.Completable;
 import io.reactivex.Flowable;

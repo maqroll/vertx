@@ -1,4 +1,4 @@
-package com.example.steps.public_api;
+package com.example.steps.congrats;
 
 import java.util.HashMap;
 import java.util.Map;
