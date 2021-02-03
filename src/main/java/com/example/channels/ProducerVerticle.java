@@ -25,19 +25,9 @@ public class ProducerVerticle extends AbstractVerticle {
         vertx.eventBus().publish(CHANNEL_ID, e);
         });
 
-    //scheduleNextProduction();
     return Completable.complete();
   }
-
-  private void scheduleNextProduction() {
-    vertx.setTimer(5_000, this::update);
-  }
-
-  private void update(Long timerId) {
-    vertx.eventBus().publish(CHANNEL_ID, rnd.nextInt(100));
-    scheduleNextProduction();
-  }
-
+  
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     vertx
