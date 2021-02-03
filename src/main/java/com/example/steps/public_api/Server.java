@@ -105,7 +105,7 @@ public class Server extends AbstractVerticle {
       .subscribe(resp -> forwardJsonOrStatusCode(ctx, resp), err -> sendBadGateway(ctx, err));
   }
 
-  private void register(RoutingContext ctx) {
+  void register(RoutingContext ctx) {
     webClient
       .post(3000, "localhost", "/register")
       .putHeader("Content-Type", "application/json")
@@ -113,11 +113,11 @@ public class Server extends AbstractVerticle {
       .subscribe(response -> sendStatusCode(ctx, response.statusCode()), err -> sendBadGateway(ctx, err));
   }
 
-  private void sendStatusCode(RoutingContext ctx, int code) {
+  void sendStatusCode(RoutingContext ctx, int code) {
     ctx.response().setStatusCode(code).end(); // end ~ flush
   }
 
-  private void sendBadGateway(RoutingContext ctx, Throwable err) {
+  void sendBadGateway(RoutingContext ctx, Throwable err) {
     logger.error("Woops", err);
     ctx.fail(502);
   }
@@ -131,7 +131,7 @@ public class Server extends AbstractVerticle {
     }
   }
 
-  private void token(RoutingContext ctx) {
+  void token(RoutingContext ctx) {
     JsonObject payload = ctx.getBodyAsJson();
     String username = payload.getString("username");
 

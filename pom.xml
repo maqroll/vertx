@@ -136,6 +136,14 @@
       <artifactId>vertx-junit5-rx-java2</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- unit testing -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.7.7</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
