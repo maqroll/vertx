@@ -1,6 +1,7 @@
 package com.example.channels;
 
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.RxHelper;
@@ -18,16 +19,19 @@ public class ProducerVerticle extends AbstractVerticle {
 
   @Override
   public Completable rxStart() {
-    Observable
-      .interval(1, TimeUnit.SECONDS, RxHelper.scheduler(vertx))
+    // No back-pressure
+    // It generates next one after processing + interval.
+    Flowable
+      .interval(1, TimeUnit.MILLISECONDS, RxHelper.scheduler(vertx))
       .map(l -> rnd.nextInt(100))
       .subscribe( e -> {
+        Thread.sleep(1000);
         vertx.eventBus().publish(CHANNEL_ID, e);
         });
 
     return Completable.complete();
   }
-  
+
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     vertx
