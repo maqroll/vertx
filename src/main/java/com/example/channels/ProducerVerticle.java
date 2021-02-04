@@ -25,7 +25,7 @@ public class ProducerVerticle extends AbstractVerticle {
       .interval(1, TimeUnit.MILLISECONDS, RxHelper.scheduler(vertx))
       .map(l -> rnd.nextInt(100))
       .subscribe( e -> {
-        Thread.sleep(1000);
+        // Thread.sleep(1000);
         vertx.eventBus().publish(CHANNEL_ID, e);
         });
 
