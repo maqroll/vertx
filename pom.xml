@@ -19,7 +19,7 @@
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
 
-    <vertx.version>4.0.0</vertx.version>
+    <vertx.version>4.0.1</vertx.version>
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
     <main.verticle>com.example.starter.MixedThreading</main.verticle>
@@ -51,6 +51,11 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config</artifactId>
     </dependency>
 
     <dependency>
