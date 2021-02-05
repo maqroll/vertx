@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // This verticle explores loading data in STREAMING to Tinybird.
+// TODO: build a reactive pipeline between Kafka and Tinybird
 public class PublishToTBInStreaming extends AbstractVerticle {
   private final Logger logger = LoggerFactory.getLogger(PublishToTBInStreaming.class);
   private static final String BOUNDARY = "------------------------5b486d5cbfe22191";
@@ -38,13 +39,13 @@ public class PublishToTBInStreaming extends AbstractVerticle {
     // Underlying webclient either sends chunked or not depending on the size.
     // This code is going to FAIL for small files (not chunked)
     OpenOptions options = new OpenOptions();
-    AsyncFile file = vertx.fileSystem().openBlocking("/tmp/FE21137002276387.csv", options).setReadBufferSize(8192*6);
+    AsyncFile file = vertx.fileSystem().openBlocking("/tmp/FE21137002276387.csv", options).setReadBufferSize(8192 * 6);
 
     RxReadStreamImpl readStream = new RxReadStreamImpl(file, BOUNDARY);
 
     webClient
       .postAbs("https://api.tinybird.co/v0/datasources?name=luz")
-      .putHeader("transfer-encoding","chunked")
+      .putHeader("transfer-encoding", "chunked")
       .putHeader("Authorization", "Bearer " + authToken)
       .putHeader("Content-Type", "multipart/form-data; boundary=" + BOUNDARY)
       .expect(ResponsePredicate.status(200))
@@ -68,7 +69,7 @@ public class PublishToTBInStreaming extends AbstractVerticle {
       .ignoreElement()
       .andThen(
         vertx
-      .rxDeployVerticle(new PublishToTBInStreaming())
+          .rxDeployVerticle(new PublishToTBInStreaming())
       )
       .ignoreElement()
       .subscribe();
