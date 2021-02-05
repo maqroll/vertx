@@ -2,7 +2,6 @@ package com.example.tb;
 
 import io.reactivex.Completable;
 import io.vertx.core.file.OpenOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.Vertx;
