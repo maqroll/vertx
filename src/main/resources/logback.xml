@@ -7,6 +7,7 @@
   <logger name="io.netty" level="warn"/>
   <logger name="com.example.tb.ReadStreamImpl" level="error"/>
   <logger name="com.example.tb.RxReadStreamImpl" level="error"/>
+  <logger name="io.vertx.core.impl.BlockedThreadChecker" level="OFF" />
   <root level="debug">
     <appender-ref ref="STDOUT"/>
   </root>
