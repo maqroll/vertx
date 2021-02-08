@@ -1,10 +1,14 @@
 package com.example.tb;
 
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.file.AsyncFile;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.ext.web.client.predicate.ResponsePredicate;
@@ -20,6 +24,7 @@ public class PublishToTBInStreaming extends AbstractVerticle {
 
   WebClient webClient;
   ConfigRetriever retriever;
+  boolean sentFirst = false;
 
   @Override
   public Completable rxStart() {
@@ -35,22 +40,46 @@ public class PublishToTBInStreaming extends AbstractVerticle {
     vertx.close();
   }
 
+  private Buffer map(Buffer b) {
+    if (sentFirst) {
+      return b;
+    } else {
+      sentFirst = true;
+      return Buffer.buffer("--" + BOUNDARY + "\r\n" +
+        "Content-Disposition: form-data; name=\"csv\"; filename=\"tmp.csv\"\r\n" +
+        "Content-Type: application/octet-stream\r\n" +
+        "\r\n").appendBuffer(b);
+    }
+  }
+
   private void streamToTB(String authToken) {
     // Underlying webclient either sends chunked or not depending on the size.
     // This code is going to FAIL for small files (not chunked)
     OpenOptions options = new OpenOptions();
     AsyncFile file = vertx.fileSystem().openBlocking("/tmp/FE21137002276387.csv", options).setReadBufferSize(8192 * 6);
 
-    RxReadStreamImpl readStream = new RxReadStreamImpl(file, BOUNDARY);
+    Single<Buffer> epilogo = Single.just(Buffer.buffer(
+      "\r\n" +
+        "--" + BOUNDARY + "--\r\n"));
+
+    Single<Buffer> prologo = Single.just(Buffer.buffer("--" + BOUNDARY + "\r\n" +
+      "Content-Disposition: form-data; name=\"csv\"; filename=\"tmp.csv\"\r\n" +
+      "Content-Type: application/octet-stream\r\n" +
+      "\r\n"));
+
+    Flowable<Buffer> bufferFlowable1 = prologo.toFlowable()
+      .concatWith(file.toFlowable().subscribeOn(RxHelper.blockingScheduler(vertx)))
+      .concatWith(epilogo);
 
     webClient
-      .postAbs("https://api.tinybird.co/v0/datasources?name=luz")
+      //.postAbs("http://localhost:8080/v0/datasources?name=luz")
+      .postAbs("https://api.tinybird.co/v0/datasources?name=luz3")
       .putHeader("transfer-encoding", "chunked")
       .putHeader("Authorization", "Bearer " + authToken)
       .putHeader("Content-Type", "multipart/form-data; boundary=" + BOUNDARY)
       .expect(ResponsePredicate.status(200))
       .as(BodyCodec.string())
-      .rxSendStream(readStream)
+      .rxSendStream(bufferFlowable1)
       .subscribe(r -> {
           logger.info("ok");
           logger.info(r.body());
