@@ -69,13 +69,15 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
       .doOnError(err -> logger.error("Woops", err))
       .retryWhen(this::retryLater)
       .subscribe(resp -> {
-        resp.toFuture().get();
+        // mapping using streamBatchToTB doesn't really add anything
+        // better move that to subscribe loop
+        resp.toFuture().get(); // wait until httpresponse completes
         Thread.sleep(10000); // artificial delay because of tinybird's quotas
         //consumer.commit();
       });
     // TODO: inmune to failure both in Kafka and backend
     // TODO: log partitions/offsets in failure
-    // TODO: move resp.toFuture().get() to map 
+    // TODO: move resp.toFuture().get() to map
   }
 
   private Single<HttpResponse<String>> streamBatchToTB(List<KafkaConsumerRecord<String, String>> kafkaConsumerRecords) {
