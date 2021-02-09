@@ -73,7 +73,9 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
         Thread.sleep(10000); // artificial delay because of tinybird's quotas
         //consumer.commit();
       });
-
+    // TODO: inmune to failure both in Kafka and backend
+    // TODO: log partitions/offsets in failure
+    // TODO: move resp.toFuture().get() to map 
   }
 
   private Single<HttpResponse<String>> streamBatchToTB(List<KafkaConsumerRecord<String, String>> kafkaConsumerRecords) {
