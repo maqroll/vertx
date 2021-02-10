@@ -77,7 +77,7 @@ public class PublishToTBInStreamingFromKafkaWithExplicitPolling extends Abstract
     return Flowable
       .interval(10, TimeUnit.SECONDS, RxHelper.blockingScheduler(vertx))
       .map(l -> {
-        return consumer.get().rxPoll(Duration.of(100, ChronoUnit.MILLIS));
+        return consumer.get().rxPoll(Duration.of(2, ChronoUnit.SECONDS));
       })
       .map(b -> b.toFuture().get())
       .filter(b -> !b.isEmpty())
@@ -109,11 +109,8 @@ public class PublishToTBInStreamingFromKafkaWithExplicitPolling extends Abstract
 
     init(consumer)
       .subscribe(resp -> {
-          // Failed to meet at-least-once semantic
-          // because it commits last read message,
-          // not last processed message
-          consumer.get().commit();
-          //Thread.sleep(10_000); // artificial delay because of tinybird's quotas
+          // At least once semantic
+          consumer.get().rxCommit().blockingGet();
         },
         t -> {
           logger.error("Fail!!", t);

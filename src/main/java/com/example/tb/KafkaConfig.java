@@ -12,6 +12,7 @@ class KafkaConfig {
     config.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
     config.put("auto.offset.reset", "earliest");
     config.put("enable.auto.commit", "false");
+    config.put("max.poll.records", "5000");
     config.put("group.id", group);
     return config;
   }
