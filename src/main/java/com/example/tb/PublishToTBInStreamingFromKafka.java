@@ -20,7 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
   private final Logger logger = LoggerFactory.getLogger(PublishToTBInStreamingFromKafka.class);
@@ -58,23 +60,38 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
     consumer
       .subscribe("data")
       .toFlowable()
-      // make sure that flow processing (including http) is serialized
+      // make sure that flow processing (including http) is SERIALIZED
       // blocking in subscription in event-loop prevents http request from making progress
-      // so we observe on worker (with ordered to force serialization)
-      .observeOn(RxHelper.blockingScheduler(vertx,true))
+      // so we observe on worker (with ORDERED to force serialization)
+      .observeOn(RxHelper.blockingScheduler(vertx, true))
       .buffer(3, TimeUnit.SECONDS, 1000) // every 3 seconds or 1000 messages (what happens first)
       .filter(e -> !e.isEmpty())
-      .doOnNext(e -> logger.error("next"))
+      .doOnNext(e -> {
+        Optional<Long> minOffset = e.stream().map(l -> l.offset()).min(Long::compare);
+        Optional<Long> maxOffset = e.stream().map(l -> l.offset()).max(Long::compare);
+        logger.error("next {}-{}", minOffset, maxOffset);
+      })
       .map(this::streamBatchToTB)
-      .doOnError(err -> logger.error("Woops", err))
+      // retryWhen is ineffective without this map
+      // because if the subscription to the single is done inside onNext
+      // errors didn't get signalled in the main flowable
+      .map(e -> e.toFuture().get())
+      .doOnError(err -> {
+        logger.error("Woops", err);
+      })
+      // ineffective because consumer buffers messages
+      // better replace consumer
       .retryWhen(this::retryLater)
       .subscribe(resp -> {
-        // mapping using streamBatchToTB doesn't really add anything
-        // better move that to subscribe loop
-        resp.toFuture().get(); // wait until httpresponse completes
-        Thread.sleep(10000); // artificial delay because of tinybird's quotas
-        //consumer.commit();
-      });
+          // mapping using streamBatchToTB doesn't really add anything
+          // better move that to subscribe loop
+          // resp.toFuture().get(); // wait until httpresponse completes
+          Thread.sleep(10000); // artificial delay because of tinybird's quotas
+          //consumer.commit();
+        },
+        t -> {
+          logger.error("Fail!!", t);
+        });
     // TODO: inmune to failure both in Kafka and backend
     // TODO: log partitions/offsets in failure
     // TODO: move resp.toFuture().get() to map
@@ -104,7 +121,7 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
 
     return webClient
       //.postAbs("http://localhost:8080/v0/datasources?name=luz")
-      .postAbs("https://api.tinybird.co/v0/datasources?name=luz&mode=append")
+      .postAbs("https://api.tinybirdo.co/v0/datasources?name=luz&mode=append")
       .putHeader("transfer-encoding", "chunked")
       .putHeader("Authorization", "Bearer " + authToken)
       .putHeader("Content-Type", "multipart/form-data; boundary=" + BOUNDARY)
@@ -112,11 +129,11 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
       .as(BodyCodec.string())
       .rxSendStream(buffer)
       ;
-      //.toFlowable();
+    //.toFlowable();
   }
 
   private Flowable<Throwable> retryLater(Flowable<Throwable> errs) {
-    return errs.delay(10, TimeUnit.SECONDS, RxHelper.scheduler(vertx));
+    return errs.delay(10, TimeUnit.SECONDS, RxHelper.blockingScheduler(vertx));
   }
 
   public static void main(String[] args) {
