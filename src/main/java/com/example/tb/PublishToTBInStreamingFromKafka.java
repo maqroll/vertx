@@ -5,6 +5,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.RxHelper;
@@ -22,11 +23,14 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
   private final Logger logger = LoggerFactory.getLogger(PublishToTBInStreamingFromKafka.class);
   private static final String BOUNDARY = "------------------------5b486d5cbfe22191"; // anything will do
+  private static final String CONSUMER_GROUP = "tb-ingestion";
+  private static final String TOPIC = "data";
   private String authToken;
 
   WebClient webClient;
@@ -54,17 +58,17 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
     vertx.close();
   }
 
-  private void streamToTB() {
-    KafkaConsumer<String, String> consumer = KafkaConsumer.<String, String>create(vertx, KafkaConfig.consumerConfig("tb-ingestion"));
+  private Flowable<HttpResponse<String>> init(AtomicReference<KafkaConsumer<String,String>> consumer) {
+    consumer.set(KafkaConsumer.<String, String>create(vertx, KafkaConfig.consumerConfig(CONSUMER_GROUP)));
 
-    consumer
-      .subscribe("data")
+    return consumer.get()
+      .subscribe(TOPIC)
       .toFlowable()
       // make sure that flow processing (including http) is SERIALIZED
       // blocking in subscription in event-loop prevents http request from making progress
       // so we observe on worker (with ORDERED to force serialization)
       .observeOn(RxHelper.blockingScheduler(vertx, true))
-      .buffer(3, TimeUnit.SECONDS, 1000) // every 3 seconds or 1000 messages (what happens first)
+      .buffer(100, TimeUnit.MILLISECONDS) // every 3 seconds
       .filter(e -> !e.isEmpty())
       .doOnNext(e -> {
         Optional<Long> minOffset = e.stream().map(l -> l.offset()).min(Long::compare);
@@ -79,22 +83,29 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
       .doOnError(err -> {
         logger.error("Woops", err);
       })
-      // ineffective because consumer buffers messages
-      // better replace consumer
-      .retryWhen(this::retryLater)
+      // if something goes wrong keeps re-trying FOREVER from LAST COMMITTED offset
+      .onErrorResumeNext(t -> {
+          consumer.get().close();
+          consumer.set(KafkaConsumer.<String, String>create(vertx, KafkaConfig.consumerConfig(CONSUMER_GROUP)));
+          return init(consumer);
+        }
+      );
+  }
+
+  private void streamToTB() {
+    AtomicReference<KafkaConsumer<String, String>> consumer = new AtomicReference<>();
+
+    init(consumer)
       .subscribe(resp -> {
-          // mapping using streamBatchToTB doesn't really add anything
-          // better move that to subscribe loop
-          // resp.toFuture().get(); // wait until httpresponse completes
-          Thread.sleep(10000); // artificial delay because of tinybird's quotas
-          //consumer.commit();
+          // Failed to meet at-least-once semantic
+          // because it commits last read message,
+          // not last processed message
+          consumer.get().commit();
+          Thread.sleep(10_000); // artificial delay because of tinybird's quotas
         },
         t -> {
           logger.error("Fail!!", t);
         });
-    // TODO: inmune to failure both in Kafka and backend
-    // TODO: log partitions/offsets in failure
-    // TODO: move resp.toFuture().get() to map
   }
 
   private Single<HttpResponse<String>> streamBatchToTB(List<KafkaConsumerRecord<String, String>> kafkaConsumerRecords) {
@@ -121,7 +132,7 @@ public class PublishToTBInStreamingFromKafka extends AbstractVerticle {
 
     return webClient
       //.postAbs("http://localhost:8080/v0/datasources?name=luz")
-      .postAbs("https://api.tinybirdo.co/v0/datasources?name=luz&mode=append")
+      .postAbs("https://api.tinybird.co/v0/datasources?name=luz&mode=append")
       .putHeader("transfer-encoding", "chunked")
       .putHeader("Authorization", "Bearer " + authToken)
       .putHeader("Content-Type", "multipart/form-data; boundary=" + BOUNDARY)
