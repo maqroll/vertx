@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +33,7 @@ public class PublishToTBInStreamingFromKafkaWithExplicitPolling extends Abstract
   private static final String BOUNDARY = "------------------------5b486d5cbfe22191"; // anything will do
   private static final String CONSUMER_GROUP = "tb-ingestion";
   private static final String TOPIC = "data";
+  private static final String CSV_HEADER = "dia;from;to;tipo;kwh;unit_price;cost\r\n";
   private String authToken;
 
   WebClient webClient;
@@ -121,7 +121,7 @@ public class PublishToTBInStreamingFromKafkaWithExplicitPolling extends Abstract
     logger.error("Starting web request");
     // Underlying webclient either sends chunked or not depending on the size.
     // This code is going to FAIL for small files (not chunked)
-    Single<Buffer> header = Single.just(Buffer.buffer("dia;from;to;tipo;kwh;unit_price;cost\r\n"));
+    Single<Buffer> header = Single.just(Buffer.buffer(CSV_HEADER));
     Single<Buffer> epilogue = Single.just(Buffer.buffer(
       "\r\n" +
         "--" + BOUNDARY + "--\r\n"));
@@ -139,6 +139,7 @@ public class PublishToTBInStreamingFromKafkaWithExplicitPolling extends Abstract
         Flowable.fromIterable(kafkaConsumerRecords).map(r -> Buffer.buffer(r.value() + "\r\n")),
         epilogue.toFlowable());
 
+    // Aparently TB ignores Content-Encoding header in multipart data.
     return webClient
       //.postAbs("http://localhost:8080/v0/datasources?name=luz")
       .postAbs("https://api.tinybird.co/v0/datasources?name=luz&mode=append")
