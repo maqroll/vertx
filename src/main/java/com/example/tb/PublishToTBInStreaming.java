@@ -47,7 +47,7 @@ public class PublishToTBInStreaming extends AbstractVerticle {
   private void streamToTB(String authToken) {
     // Underlying webclient either sends chunked or not depending on the size.
     // This code is going to FAIL for small files (not chunked)
-    OpenOptions options = new OpenOptions();
+      OpenOptions options = new OpenOptions();
     AsyncFile file = vertx.fileSystem().openBlocking("/tmp/FE21137002276387.csv", options).setReadBufferSize(8192 * 2);
 
     Single<Buffer> epilogo = Single.just(Buffer.buffer(

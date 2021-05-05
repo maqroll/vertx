@@ -13,7 +13,7 @@ clean:
 	rm -f private.pem private_key.pem public_key.pem
 
 offsets:
-	docker exec -it clickhouse_avro_kafka_1 kafka-console-consumer --bootstrap-server localhost:9092 --topic __consumer_offsets --formatter "kafka.coordinator.group.GroupMetadataManager\$$OffsetsMessageFormatter" --from-beginning
+	@docker exec -it clickhouse_avro_kafka_1 kafka-console-consumer --bootstrap-server localhost:9092 --topic __consumer_offsets --formatter "kafka.coordinator.group.GroupMetadataManager\$$OffsetsMessageFormatter" --from-beginning 
 
 reset:
-	docker exec -it clickhouse_avro_kafka_1 kafka-consumer-groups --bootstrap-server localhost:9092 --group tb-ingestion --topic data --reset-offsets --to-earliest --execute
+	@docker exec -it clickhouse_avro_kafka_1 kafka-consumer-groups --bootstrap-server localhost:9092 --group tb-ingestion --topic data --reset-offsets --to-earliest --execute

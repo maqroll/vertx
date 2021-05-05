@@ -4,6 +4,8 @@ import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class Intro {
@@ -40,6 +42,10 @@ public class Intro {
         pair -> System.out.println("next: " + pair + " at " + System.currentTimeMillis()),
         Throwable::printStackTrace,
         () -> System.out.println("~Done~"));
+
+    Flowable.just("x","y", "z")
+      .flatMap(e -> Flowable.fromIterable(Collections.nCopies(1,e)))
+      .subscribe(e -> System.out.println(e));
 
     Thread.sleep(10_000);
   }
