@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
  * We don't use consumer group api to prevent rebalancing.
  * We'll go for static partition assignment.
  * We don't store committed input offsets in internal topic (__consumer_offsets).
+ * Would be possible to build pipelines from inputs on read-only Kafka clusters?
  */
 public class KafkaProcessing extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProcessing.class);
