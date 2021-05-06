@@ -1,14 +1,14 @@
 <configuration>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%level [%thread] %logger{0} - %msg%n</pattern>
+      <pattern>%level [%thread] %d{HH:mm:ss.SSS} %logger{0} - %msg%n</pattern>
     </encoder>
   </appender>
   <logger name="io.netty" level="warn"/>
   <logger name="com.example.tb.ReadStreamImpl" level="error"/>
   <logger name="com.example.tb.RxReadStreamImpl" level="error"/>
   <logger name="io.vertx.core.impl.BlockedThreadChecker" level="OFF" />
-  <root level="WARN">
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

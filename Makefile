@@ -17,3 +17,6 @@ offsets:
 
 reset:
 	docker exec -it clickhouse_avro_kafka_1 kafka-consumer-groups --bootstrap-server localhost:9092 --group tb-ingestion --topic data --reset-offsets --to-earliest --execute
+
+shell:
+	docker-compose exec kafka bash

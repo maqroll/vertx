@@ -19,12 +19,12 @@
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
 
-    <vertx.version>4.0.1</vertx.version>
+    <vertx.version>4.0.3</vertx.version>
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
-    <main.verticle>com.example.starter.MixedThreading</main.verticle>
-    <launcher.class>com.example.steps.public_api.Main</launcher.class>
-    <!--launcher.class>io.vertx.core.Launcher</launcher.class-->
+    <main.verticle>com.example.kafka_streams.KafkaProcessing</main.verticle>
+    <!--launcher.class>com.example.steps.public_api.Main</launcher.class-->
+    <launcher.class>io.vertx.core.Launcher</launcher.class>
   </properties>
 
   <dependencyManagement>
