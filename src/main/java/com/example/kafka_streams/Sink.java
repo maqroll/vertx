@@ -29,6 +29,8 @@ public class Sink extends AbstractVerticle {
 
     producer.initTransactions(); // blocking
 
+    AtomicBoolean inTx = new AtomicBoolean();
+
     vertx
       .eventBus()
       .<KafkaConsumerRecord<String,String>>localConsumer("channel")
@@ -37,20 +39,27 @@ public class Sink extends AbstractVerticle {
       .buffer(100, TimeUnit.MILLISECONDS, 1000)
       .subscribe(records -> {
         if (!records.isEmpty()) {
-          long offset = records.get(records.size() - 1).offset();
-          LOGGER.info("Start processing {}", offset);
-          producer.beginTransaction();
-          records.stream().forEach(record -> producer.write(KafkaProducerRecord.create("output", record.value().getBytes())));
-          producer.write(KafkaProducerRecord.create("offsets", Long.valueOf(offset + 1).toString().getBytes()));
-          producer.commitTransaction();
-          LOGGER.info("End processing {}", offset);
+          processBatch(records, producer);
         }
+      },throwable -> {
+        LOGGER.error("Error",throwable);
       });
 
-    // TODO retries
     // TODO flow
+    // is it worth?
 
     return Completable.complete();
+  }
+
+  // TODO retry forever
+  private void processBatch(List<KafkaConsumerRecord<String,String>> records, KafkaProducer<byte[], byte[]> producer) {
+    long offset = records.get(records.size() - 1).offset();
+    LOGGER.info("Start processing {}", offset);
+    producer.beginTransaction();
+    records.stream().forEach(record -> producer.write(KafkaProducerRecord.create("output", record.value().getBytes())));
+    producer.write(KafkaProducerRecord.create("offsets", Long.valueOf(offset + 1).toString().getBytes()));
+    producer.commitTransaction();
+    LOGGER.info("End processing {}", offset);
   }
 
   private void process(KafkaConsumer<String, String> consumer) {

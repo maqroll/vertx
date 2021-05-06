@@ -38,12 +38,14 @@ public class Source extends AbstractVerticle {
     // TODO retrieve last committed offset
 
     consumer
-      .assign(new TopicPartition("input",0))
+      .assign(new TopicPartition("input",0)) // static assignment
       .toFlowable()
       .subscribe(record -> {
         LOGGER.info("{},{}", record.partition(), record.offset());
 
-        toSink.write(record); // TODO check
+        toSink.write(record);
+        // TODO backpressure
+        // from time to time check pending messages and pause producer if messages pile up
       });
 
     return Completable.complete();
