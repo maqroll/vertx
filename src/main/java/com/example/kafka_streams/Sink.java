@@ -3,8 +3,6 @@ package com.example.kafka_streams;
 import io.reactivex.Completable;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.KafkaClientOptions;
-import io.vertx.kafka.client.common.TopicPartition;
-import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.kafka.client.consumer.KafkaConsumer;
 import io.vertx.reactivex.kafka.client.consumer.KafkaConsumerRecord;
@@ -17,49 +15,71 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Sink extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(Sink.class);
+  private static final Random RND = new Random();
+  private final AtomicReference<KafkaProducer<byte[],byte[]>> producer = new AtomicReference<>();
 
   @Override
   public Completable rxStart() {
 
-    final KafkaProducer<byte[], byte[]> producer = KafkaProducer.createShared(vertx, "test", new KafkaClientOptions(getConf()));
+    producer.set(KafkaProducer.createShared(vertx, "test", new KafkaClientOptions(getConf())));
 
-    producer.initTransactions(); // blocking
+    producer.get().initTransactions(); // blocking
 
-    AtomicBoolean inTx = new AtomicBoolean();
+    flow(producer.get())
+      .subscribe();
 
-    vertx
+    return Completable.complete();
+  }
+
+  private Completable flow(KafkaProducer<byte[], byte[]> producer) {
+    return vertx
       .eventBus()
       .<KafkaConsumerRecord<String,String>>localConsumer("channel")
       .toFlowable()
       .map(record -> record.body())
       .buffer(100, TimeUnit.MILLISECONDS, 1000)
-      .subscribe(records -> {
-        if (!records.isEmpty()) {
-          processBatch(records, producer);
-        }
-      },throwable -> {
-        LOGGER.error("Error",throwable);
-      });
+      .flatMapCompletable(this::processBatchForever, true, 1);
+  }
 
-    // TODO flow
-    // is it worth?
+  private Completable processBatchForever(List<KafkaConsumerRecord<String,String>> records) {
+    long errors=0;
+
+    do {
+      try {
+        return processBatch(records);
+      } catch (Throwable t) {
+        errors++;
+        LOGGER.info("Waiting for {} ms", 10L<<errors);
+        vertx.timerStream(10L << errors).fetch(1);
+      }
+    } while(true);
+  }
+
+  private Completable processBatch(List<KafkaConsumerRecord<String,String>> records) {
+    if (!records.isEmpty()) {
+      long offset = records.get(records.size() - 1).offset();
+      LOGGER.info("Start processing {}", offset);
+      producer.get().beginTransaction();
+      records.stream().forEach(record -> producer.get().write(KafkaProducerRecord.create("output", record.value().getBytes())));
+      producer.get().write(KafkaProducerRecord.create("offsets", Long.valueOf(offset + 1).toString().getBytes()));
+      injectFaultAtRandom();
+      producer.get().commitTransaction();
+      LOGGER.info("End processing {}", offset);
+    }
 
     return Completable.complete();
   }
 
-  // TODO retry forever
-  private void processBatch(List<KafkaConsumerRecord<String,String>> records, KafkaProducer<byte[], byte[]> producer) {
-    long offset = records.get(records.size() - 1).offset();
-    LOGGER.info("Start processing {}", offset);
-    producer.beginTransaction();
-    records.stream().forEach(record -> producer.write(KafkaProducerRecord.create("output", record.value().getBytes())));
-    producer.write(KafkaProducerRecord.create("offsets", Long.valueOf(offset + 1).toString().getBytes()));
-    producer.commitTransaction();
-    LOGGER.info("End processing {}", offset);
+  private void injectFaultAtRandom() {
+    if (RND.nextBoolean()) {
+      throw new IllegalStateException();
+    }
   }
 
   private void process(KafkaConsumer<String, String> consumer) {
