@@ -3,6 +3,7 @@ package com.example.kafka_streams;
 import io.reactivex.Completable;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.shareddata.Counter;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
@@ -35,35 +36,37 @@ public class Source extends AbstractVerticle {
           "channel",
           new DeliveryOptions().setLocalOnly(true).setCodecName(LocalDummyMessageCodec.NAME));
 
-    // TODO retrieve last committed offset
+    vertx.sharedData().getDelegate().getLocalCounter("pending").onComplete(asyncCounter -> {
+      if (asyncCounter.succeeded()) {
+        Counter counter = asyncCounter.result();
 
-    consumer
-      .assign(new TopicPartition("input",0)) // static assignment
-      .toFlowable()
-      .subscribe(record -> {
-        LOGGER.info("{},{}", record.partition(), record.offset());
+        // Cheap flow control
+        vertx.periodicStream(5).toFlowable().subscribe(l -> {
+          counter.get().onSuccess(res -> {
+            if (res > 1000) {
+              LOGGER.warn("Pausing");
+              consumer.pause();
+            } else {
+              consumer.resume();
+            }
+          });
+        });
 
-        toSink.write(record);
-        // TODO backpressure
-        // from time to time check pending messages and pause producer if messages pile up
-      });
+        consumer
+          .assign(new TopicPartition("input", 0)) // static assignment
+          .toFlowable()
+          .subscribe(record -> {
+            LOGGER.info("{},{}", record.partition(), record.offset());
 
-    return Completable.complete();
-  }
-
-  private void process(KafkaConsumer<String, String> consumer) {
-    consumer.poll(Duration.ofMillis(100),event -> {
-      LOGGER.info("Poll");
-      if (event.succeeded()) {
-        KafkaConsumerRecords<String, String> records = event.result();
-        for (int i=0; i<records.size(); i++) {
-          KafkaConsumerRecord<String, String> record = records.recordAt(i);
-          LOGGER.info("{},{}", record.partition(), record.offset());
-        }
+            toSink.write(record);
+            counter.incrementAndGet();
+          });
       } else {
-        LOGGER.error("Failed while polling", event.cause());
+        vertx.close();
       }
     });
+
+    return Completable.complete();
   }
 
   private JsonObject getConf() {

@@ -2,6 +2,7 @@ package com.example.kafka_streams;
 
 import io.reactivex.Completable;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.shareddata.Counter;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.kafka.client.consumer.KafkaConsumer;
@@ -23,6 +24,7 @@ public class Sink extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(Sink.class);
   private static final Random RND = new Random();
   private final AtomicReference<KafkaProducer<byte[],byte[]>> producer = new AtomicReference<>();
+  private final AtomicReference<Counter> counter = new AtomicReference<>();
 
   @Override
   public Completable rxStart() {
@@ -31,25 +33,29 @@ public class Sink extends AbstractVerticle {
 
     producer.get().initTransactions(); // blocking
 
-    flow(producer.get())
-      .subscribe();
+    vertx.sharedData()
+      .rxGetLocalCounter("pending")
+      .subscribe(counter -> {
+        this.counter.set(counter.getDelegate());
+        vertx
+          .eventBus()
+          .<KafkaConsumerRecord<String,String>>localConsumer("channel")
+          .toFlowable()
+          .map(record -> record.body())
+          .buffer(100, TimeUnit.MILLISECONDS, 1000)
+          .flatMapCompletable(this::processBatchForever, true, 1)
+        .subscribe();
+    }, throwable -> {
+      vertx.close();
+    });
 
     return Completable.complete();
-  }
-
-  private Completable flow(KafkaProducer<byte[], byte[]> producer) {
-    return vertx
-      .eventBus()
-      .<KafkaConsumerRecord<String,String>>localConsumer("channel")
-      .toFlowable()
-      .map(record -> record.body())
-      .buffer(100, TimeUnit.MILLISECONDS, 1000)
-      .flatMapCompletable(this::processBatchForever, true, 1);
   }
 
   private Completable processBatchForever(List<KafkaConsumerRecord<String,String>> records) {
     long errors=0;
 
+    counter.get().addAndGet(records.size() * -1);
     do {
       try {
         return processBatch(records);
