@@ -74,7 +74,7 @@ public class Source extends AbstractVerticle {
 
     props.put("config", new JsonObject()
       .put(org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-      "localhost:29092")
+      "kafka:9092")
       //.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, "consumerGroupTest")
       .put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
       .put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")

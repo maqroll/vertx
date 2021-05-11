@@ -60,6 +60,17 @@ services:
     volumes:
       - ./src/main/resources/scripts:/scripts
 
+  kafkacat:
+    image: edenhill/kafkacat:1.6.0
+    depends_on:
+      - kafka
+    hostname: kafkacat
+
+  processing:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+
 #  artemis:
 #    image: vromero/activemq-artemis:2.13.0-alpine
 #    ports:

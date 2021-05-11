@@ -43,7 +43,9 @@ public class Sink extends AbstractVerticle {
           .toFlowable()
           .map(record -> record.body())
           .buffer(100, TimeUnit.MILLISECONDS, 1000)
-          .flatMapCompletable(this::processBatchForever, true, 1)
+          .filter(kafkaConsumerRecords -> kafkaConsumerRecords.size()>0)
+          .onBackpressureBuffer()
+          .flatMapCompletable(this::processBatchWithRetry, true, 1)
         .subscribe();
     }, throwable -> {
       vertx.close();
@@ -52,19 +54,31 @@ public class Sink extends AbstractVerticle {
     return Completable.complete();
   }
 
-  private Completable processBatchForever(List<KafkaConsumerRecord<String,String>> records) {
-    long errors=0;
+  private Completable processBatchWithRetry(List<KafkaConsumerRecord<String,String>> records) {
+      return vertx.rxExecuteBlocking(promise -> {
+        // Flowable.just().process.sleep.retry
+        long errors = 0;
+        counter.get().addAndGet(records.size() * -1);
 
-    counter.get().addAndGet(records.size() * -1);
-    do {
-      try {
-        return processBatch(records);
-      } catch (Throwable t) {
-        errors++;
-        LOGGER.info("Waiting for {} ms", 10L<<errors);
-        vertx.timerStream(10L << errors).fetch(1);
-      }
-    } while(true);
+        do {
+          try {
+            processBatch(records);
+            promise.complete();
+            break;
+          } catch (Throwable t) {
+            LOGGER.error("Error",t);
+            producer.get().abortTransaction();
+            errors++;
+            LOGGER.info("Waiting for {} ms", 10L << errors);
+            final long delay = 10 << errors;
+            try {
+              Thread.sleep(10 << errors);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+          }
+        } while (true);
+      }, true).ignoreElement();
   }
 
   private Completable processBatch(List<KafkaConsumerRecord<String,String>> records) {
@@ -73,7 +87,7 @@ public class Sink extends AbstractVerticle {
       LOGGER.info("Start processing {}", offset);
       producer.get().beginTransaction();
       records.stream().forEach(record -> producer.get().write(KafkaProducerRecord.create("output", record.value().getBytes())));
-      producer.get().write(KafkaProducerRecord.create("offsets", Long.valueOf(offset + 1).toString().getBytes()));
+      producer.get().write(KafkaProducerRecord.create("offsets", "key".getBytes(), Long.valueOf(offset + 1).toString().getBytes()));
       injectFaultAtRandom();
       producer.get().commitTransaction();
       LOGGER.info("End processing {}", offset);
@@ -108,7 +122,7 @@ public class Sink extends AbstractVerticle {
 
     props.put("config", new JsonObject()
       .put(org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-      "localhost:29092")
+      "kafka:9092")
       //.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, "consumerGroupTest")
       .put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
       .put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")

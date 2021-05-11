@@ -23,7 +23,7 @@ kafka-topics \
   --topic offsets \
   --replication-factor 1 \
   --partitions 1 \
-  --config "cleanup.policy=compact"
+  --config "cleanup.policy=compact" \
   --create
 
 sleep infinity

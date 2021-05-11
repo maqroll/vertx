@@ -20,3 +20,16 @@ reset:
 
 shell:
 	docker-compose exec kafka bash
+
+infra:
+	docker-compose up -V kafka-create-topics
+
+input:
+	seq 1000 | docker-compose run kafkacat -b kafka:9092 -X enable.idempotence=true -P -t input
+
+output:
+	docker-compose run kafkacat -b kafka:9092  -t output -o 0 -e
+
+processing:
+	docker image rm -f vertx-testing_processing:latest
+	docker-compose run --rm processing

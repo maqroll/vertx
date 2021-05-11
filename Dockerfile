@@ -6,7 +6,7 @@ FROM maven:3.5-jdk-8-alpine
 COPY ./ /app
 WORKDIR /app
 #COPY --from=0 /app/vertx /app
-RUN mvn install
+RUN mvn install -DskipTests
 
 FROM openjdk:8-jre-alpine
 WORKDIR /app
