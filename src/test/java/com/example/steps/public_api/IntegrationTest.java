@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Integration tests for the public API")
 @Testcontainers
+@Disabled
 class IntegrationTest {
 
   @Container

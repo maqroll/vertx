@@ -6,7 +6,7 @@
 
   <groupId>com.example</groupId>
   <artifactId>starter</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -19,7 +19,7 @@
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
 
-    <vertx.version>4.0.3</vertx.version>
+    <vertx.version>4.2.1</vertx.version>
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
     <main.verticle>com.example.kafka_streams.KafkaProcessing</main.verticle>
@@ -40,6 +40,11 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>slice</artifactId>
+      <version>0.40</version>
+    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
@@ -142,6 +147,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.22</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- unit testing -->
     <dependency>
       <groupId>org.mockito</groupId>
@@ -159,7 +171,37 @@
         <configuration>
           <annotationProcessors>
             <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
+            <annotationProcessor>lombok.launch.AnnotationProcessorHider$AnnotationProcessor</annotationProcessor>
           </annotationProcessors>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.22</version>
+            </path>
+            <!-- required for code generation -->
+            <path>
+              <groupId>io.vertx</groupId>
+              <artifactId>vertx-codegen</artifactId>
+              <version>${vertx.version}</version>
+            </path>
+            <!-- required for proxy code generation -->
+            <path>
+              <groupId>io.vertx</groupId>
+              <artifactId>vertx-service-proxy</artifactId>
+              <version>${vertx.version}</version>
+            </path>
+            <!-- required for rx java code generation -->
+            <path>
+              <groupId>io.vertx</groupId>
+              <artifactId>vertx-rx-java2-gen</artifactId>
+              <version>${vertx.version}</version>
+            </path>
+
+          </annotationProcessorPaths>
+          <!--compilerArgs>
+            <arg>-Acodegen.output=${project.basedir}/src/main</arg>
+          </compilerArgs-->
         </configuration>
       </plugin>
       <plugin>
